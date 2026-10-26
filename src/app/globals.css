@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+/* ============================================================
+   NEXUS — dark gaming / neon design system
+   Tailwind v4 theme tokens. Prefixed --color-* tokens generate
+   bg-*, text-*, border-*, ring-* utilities automatically.
+   ============================================================ */
+@theme {
+  --color-bg: #070812;
+  --color-bg-soft: #0b0d1a;
+  --color-surface: #11131f;
+  --color-surface-2: #171a2a;
+  --color-surface-3: #1e2233;
+  --color-border: #262c42;
+  --color-border-soft: #1b2034;
+
+  --color-fg: #eef0fb;
+  --color-muted: #9aa1bd;
+  --color-faint: #838bb0;
+
+  --color-primary: #27e6ff; /* electric cyan */
+  --color-primary-dim: #0ea5c4;
+  --color-primary-glow: #27e6ff;
+
+  --color-accent: #a855f7; /* violet */
+  --color-accent-dim: #7c3aed;
+
+  --color-hot: #ff3d81; /* magenta highlight */
+  --color-lime: #b6ff3d;
+
+  --color-success: #37e39b;
+  --color-warning: #ffb547;
+  --color-danger: #ff4d6d;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-inter), ui-sans-serif, sans-serif;
+
+  --radius-xl: 1rem;
+
+}
+
+* {
+  border-color: var(--color-border-soft);
+}
+
+/* Invalid form field. Must stay OUTSIDE @layer components: unlayered rules beat
+   layered ones, so a .input-error inside the layer would lose its border-color
+   to the `*` default above. */
+.input-error {
+  border-color: var(--color-danger);
+}
+.input-error:focus {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(255, 77, 109, 0.15);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Reserve the scrollbar gutter so locking body scroll (modals, cart drawer,
+     mobile menu) doesn't shift the whole page sideways. */
+  scrollbar-gutter: stable;
+}
+
+/* Keyboard-only focus ring — visible and on-brand, never shown on mouse click. */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Ambient background: very subtle top glow only — kept restrained/professional */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(1100px 440px at 50% -10%, rgba(255, 255, 255, 0.028), transparent 70%);
+  pointer-events: none;
+}
+
+::selection {
+  background: rgba(39, 230, 255, 0.3);
+  color: #fff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-soft);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-3);
+  border-radius: 999px;
+  border: 2px solid var(--color-bg-soft);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2b3250;
+}
+
+/* ============================================================
+   Reusable component utilities
+   ============================================================ */
+@layer components {
+  .container-nexus {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-nexus { padding-inline: 1.5rem; }
+  }
+
+  .card {
+    background: color-mix(in oklab, var(--color-surface) 92%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    backdrop-filter: blur(6px);
+  }
+
+  .panel {
+    background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg-soft) 100%);
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 0.7rem 1.15rem;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .btn:active { transform: translateY(1px) scale(0.99); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: #04202a;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  .btn-primary:hover { filter: brightness(1.06); }
+
+  .btn-accent {
+    background: var(--color-accent);
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+  .btn-accent:hover { filter: brightness(1.08); }
+
+  .btn-ghost {
+    background: var(--color-surface-2);
+    color: var(--color-fg);
+    border-color: var(--color-border);
+  }
+  .btn-ghost:hover { background: var(--color-surface-3); border-color: #33415f; }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--color-primary);
+    border-color: color-mix(in oklab, var(--color-primary) 55%, transparent);
+  }
+  .btn-outline:hover { background: color-mix(in oklab, var(--color-primary) 12%, transparent); }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.28rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    color: var(--color-muted);
+  }
+
+  .input {
+    width: 100%;
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.85rem;
+    color: var(--color-fg);
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .input::placeholder { color: var(--color-faint); }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(39, 230, 255, 0.15);
+  }
+
+  .label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .link-muted { color: var(--color-muted); transition: color 0.15s ease; }
+  .link-muted:hover { color: var(--color-primary); }
+
+  .divider-glow {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+    opacity: 0.5;
+  }
+}
+
+/* Headings use the display font */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   Animations
+   ============================================================ */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+}
+.animate-marquee:hover { animation-play-state: paused; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float { animation: float 6s ease-in-out infinite; }
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.5s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
