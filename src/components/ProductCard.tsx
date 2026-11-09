@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ShoppingCart, Zap } from "lucide-react";
+import { Check, Zap } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { ProductImage } from "@/components/ProductImage";
 import { Stars } from "@/components/Stars";
-import { useCart } from "@/store/cart";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { discountPct, formatPHP } from "@/lib/utils";
 
 export function ProductCard({ product }: { product: Product }) {
-  const add = useCart((s) => s.add);
   const off = discountPct(product.price, product.compareAtPrice);
   const soldOut = product.stock <= 0;
 
@@ -62,7 +61,9 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
 
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="font-display text-lg font-bold">{formatPHP(product.price)}</span>
+          <span className="font-display text-lg font-bold">
+            {formatPHP(product.price)}
+          </span>
           {product.compareAtPrice && (
             <span className="text-xs text-faint line-through">
               {formatPHP(product.compareAtPrice)}
@@ -72,21 +73,25 @@ export function ProductCard({ product }: { product: Product }) {
 
         <span
           className={`mt-1 flex items-center gap-1 text-[0.7rem] font-medium ${
-            soldOut ? "text-danger" : product.stock <= 10 ? "text-warning" : "text-success"
+            soldOut
+              ? "text-danger"
+              : product.stock <= 10
+                ? "text-warning"
+                : "text-success"
           }`}
         >
           {!soldOut && <Check size={11} />}
-          {soldOut ? "Out of stock" : product.stock <= 10 ? `Only ${product.stock} left` : "In stock"}
+          {soldOut
+            ? "Out of stock"
+            : product.stock <= 10
+              ? `Only ${product.stock} left`
+              : "In stock"}
         </span>
 
-        <button
-          type="button"
-          disabled={soldOut}
-          onClick={() => add(product)}
-          className="btn btn-primary mt-3 w-full !py-2.5 text-sm disabled:!bg-surface-3 disabled:!text-muted"
-        >
-          <ShoppingCart size={15} /> {soldOut ? "Sold out" : "Add to cart"}
-        </button>
+        <AddToCartButton
+          product={product}
+          className="mt-3 w-full !py-2.5 text-sm disabled:!bg-surface-3 disabled:!text-muted"
+        />
       </div>
     </div>
   );

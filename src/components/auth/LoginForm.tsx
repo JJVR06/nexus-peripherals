@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { safeNext } from "@/lib/validation";
+import { authDestination } from "@/lib/auth-routing";
 import { useAuth } from "@/store/auth";
 
 export function LoginForm() {
@@ -21,11 +22,18 @@ export function LoginForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
     const res = await login(email, password);
     setLoading(false);
-    if (res.ok) router.push(next);
+    if (res.ok)
+      router.replace(
+        authDestination(
+          useAuth.getState().user?.role ?? "customer",
+          sp.get("next"),
+        ),
+      );
     else setError(res.error);
   };
 
@@ -81,7 +89,7 @@ export function LoginForm() {
       <p className="text-center text-sm text-muted">
         New to Nexus?{" "}
         <Link
-          href="/register"
+          href={`/register?next=${encodeURIComponent(next)}`}
           className="font-semibold text-primary hover:underline"
         >
           Create an account

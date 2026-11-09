@@ -18,3 +18,10 @@
 ## Still requires owner action
 
 Run the migration and seed in Supabase SQL Editor, configure authentication/redirects, promote your admin profile, publish the implementation to GitHub/Vercel, and run the two-device checklist in DEPLOYMENT.md. Password-reset email delivery requires functioning provider email settings. Real payments, outbound order emails, marketing delivery, and physical fulfillment are intentionally outside this presentation build.
+
+## Storefront polish and navigation update
+
+- 27 automated tests now cover the existing database invariants plus storefront copy/motion contracts and authentication destinations, including encoded/dot-segment redirect loops.
+- Browser authentication fixtures verified successful login, redirects away from login/registration for signed-in users, logout, and signed-out account protection. No real user credentials were used.
+- Browser checks verified cart entrance/exit and Escape dismissal, no horizontal overflow at a 390px viewport, and reduced-motion transition overrides.
+- Removed school-project labels from public navigation and copy while retaining accurate simulated-payment and fulfillment notices.

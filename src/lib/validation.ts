@@ -2,12 +2,27 @@ import type { Category, Product } from "@/lib/types";
 export const validQuantity = (n: number) =>
   Number.isInteger(n) && n >= 1 && n <= 1000;
 export function safeNext(value: string | null) {
-  return value &&
-    value.startsWith("/") &&
-    !value.startsWith("//") &&
-    !/[\\\u0000-\u001f]/.test(value)
-    ? value
-    : "/account";
+  if (
+    !value ||
+    !value.startsWith("/") ||
+    value.startsWith("//") ||
+    /[\\\u0000-\u001f]/.test(value)
+  )
+    return "/account";
+  try {
+    const decoded = decodeURIComponent(value.split(/[?#]/)[0]);
+    if (decoded.startsWith("//") || decoded.includes("\\")) return "/account";
+    const path = new URL(decoded, "https://nexus.invalid").pathname;
+    if (
+      path.startsWith("//") ||
+      path.includes("\\") ||
+      /^\/(login|register)\/?$/i.test(path)
+    )
+      return "/account";
+    return value;
+  } catch {
+    return "/account";
+  }
 }
 export function validateCategory(c: Omit<Category, "id">) {
   if (

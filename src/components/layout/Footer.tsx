@@ -20,7 +20,7 @@ export function Footer() {
     try {
       await subscribeNewsletter();
       setMessage(
-        "Preference saved. No marketing emails are sent by this presentation project.",
+        "Preference saved. Marketing email delivery is not currently enabled.",
       );
     } catch (e) {
       setMessage(errorMessage(e));
@@ -43,7 +43,7 @@ export function Footer() {
                 Join the Nexus list
               </p>
               <p className="text-sm text-muted">
-                Save your preference for this presentation.
+                Stay connected to new gear and catalog updates.
               </p>
             </div>
           </div>
@@ -88,7 +88,7 @@ export function Footer() {
             {
               icon: ShieldCheck,
               title: "Sample catalog",
-              sub: "For presentation only",
+              sub: "Explore specifications",
             },
             {
               icon: CreditCard,
@@ -97,8 +97,8 @@ export function Footer() {
             },
             {
               icon: Headset,
-              title: "Project support",
-              sub: "Contact the presenter",
+              title: "Gear support",
+              sub: "Find answers and order details",
             },
           ].map((f) => (
             <div key={f.title} className="flex items-center gap-3">
@@ -164,7 +164,7 @@ export function Footer() {
             </li>
             <li>
               <Link href="/help/about" className="link-muted">
-                About this project
+                About Nexus
               </Link>
             </li>
           </ul>

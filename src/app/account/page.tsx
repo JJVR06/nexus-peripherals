@@ -77,7 +77,7 @@ function AccountContent() {
           )}
           <button
             onClick={async () => {
-              await logout();
+              if (!(await logout())) return;
               router.push("/");
             }}
             className="btn btn-ghost"

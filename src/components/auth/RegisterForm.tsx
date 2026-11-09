@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { UserPlus } from "lucide-react";
+import { safeNext } from "@/lib/validation";
 import { useAuth } from "@/store/auth";
 
 export function RegisterForm() {
   const router = useRouter();
+  const next = safeNext(useSearchParams().get("next"));
   const register = useAuth((s) => s.register);
 
   const [name, setName] = useState("");
@@ -20,6 +22,7 @@ export function RegisterForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError("");
     if (name.trim().length < 2) return setError("Please enter your name.");
     if (!/^\S+@\S+\.\S+$/.test(email)) return setError("Enter a valid email.");
@@ -31,7 +34,7 @@ export function RegisterForm() {
     setLoading(false);
     if (res.ok) {
       if (res.message) setMessage(res.message);
-      else router.push("/account");
+      else router.replace(next);
     } else setError(res.error);
   };
 
@@ -102,7 +105,7 @@ export function RegisterForm() {
       <p className="text-center text-sm text-muted">
         Already have an account?{" "}
         <Link
-          href="/login"
+          href={`/login?next=${encodeURIComponent(next)}`}
           className="font-semibold text-primary hover:underline"
         >
           Sign in

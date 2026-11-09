@@ -9,7 +9,6 @@ import {
   Minus,
   Plus,
   ShieldCheck,
-  ShoppingCart,
   Truck,
   Undo2,
   Zap,
@@ -23,6 +22,7 @@ import { ProductImage } from "@/components/ProductImage";
 import { ProductRail } from "@/components/ProductRail";
 import { Stars } from "@/components/Stars";
 import { Skeleton } from "@/components/Skeleton";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { useCart } from "@/store/cart";
 import { discountPct, formatPHP } from "@/lib/utils";
 
@@ -243,15 +243,15 @@ export function ProductDetailClient({ slug }: { slug: string }) {
                   <Plus size={16} />
                 </button>
               </div>
-              <button
-                onClick={() => add(product, qty)}
-                className="btn btn-primary flex-1 sm:flex-none"
-              >
-                <ShoppingCart size={17} /> Add to cart
-              </button>
+              <AddToCartButton
+                product={product}
+                quantity={qty}
+                className="flex-1 sm:flex-none"
+              />
               <button
                 onClick={() => {
                   add(product, qty);
+                  useCart.getState().close();
                   router.push("/checkout");
                 }}
                 className="btn btn-accent flex-1 sm:flex-none"

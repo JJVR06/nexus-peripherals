@@ -18,7 +18,7 @@ type AuthState = {
   sync: (user: AuthUser | null) => Promise<void>;
   login: (email: string, password: string) => Promise<Result>;
   register: (name: string, email: string, password: string) => Promise<Result>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
 };
 let revision = 0;
 export const useAuth = create<AuthState>()((set, get) => ({
@@ -28,7 +28,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
   sync: async (user) => {
     const current = ++revision;
     if (!user) {
-      set({ user: null, hydrated: true });
+      set({ user: null, hydrated: true, error: "" });
       return;
     }
     try {
@@ -73,8 +73,7 @@ export const useAuth = create<AuthState>()((set, get) => ({
       if (!data.session)
         return {
           ok: true,
-          message:
-            "Check your email to confirm your account, then sign in. For the presentation, your project owner can disable email confirmation in Supabase.",
+          message: "Check your email to confirm your account, then sign in. ",
         };
       await get().sync(data.user);
       if (get().error) throw new Error(get().error);
@@ -84,12 +83,15 @@ export const useAuth = create<AuthState>()((set, get) => ({
     }
   },
   logout: async () => {
-    const { error } = await getSupabase().auth.signOut();
-    if (error) {
-      set({ error: error.message });
-      return;
+    try {
+      const { error } = await getSupabase().auth.signOut();
+      if (error) throw error;
+      ++revision;
+      set({ user: null, hydrated: true, error: "" });
+      return true;
+    } catch (error) {
+      set({ error: errorMessage(error) });
+      return false;
     }
-    ++revision;
-    set({ user: null, hydrated: true, error: "" });
   },
 }));

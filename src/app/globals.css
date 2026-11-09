@@ -33,10 +33,10 @@
   --color-danger: #ff4d6d;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display), var(--font-inter), ui-sans-serif, sans-serif;
+  --font-display:
+    var(--font-display), var(--font-inter), ui-sans-serif, sans-serif;
 
   --radius-xl: 1rem;
-
 }
 
 * {
@@ -89,8 +89,11 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background:
-    radial-gradient(1100px 440px at 50% -10%, rgba(255, 255, 255, 0.028), transparent 70%);
+  background: radial-gradient(
+    1100px 440px at 50% -10%,
+    rgba(255, 255, 255, 0.028),
+    transparent 70%
+  );
   pointer-events: none;
 }
 
@@ -127,7 +130,9 @@ body::before {
     padding-inline: 1rem;
   }
   @media (min-width: 640px) {
-    .container-nexus { padding-inline: 1.5rem; }
+    .container-nexus {
+      padding-inline: 1.5rem;
+    }
   }
 
   .card {
@@ -138,7 +143,11 @@ body::before {
   }
 
   .panel {
-    background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg-soft) 100%);
+    background: linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-bg-soft) 100%
+    );
     border: 1px solid var(--color-border);
     border-radius: 1rem;
   }
@@ -154,40 +163,59 @@ body::before {
     padding: 0.7rem 1.15rem;
     border-radius: 0.7rem;
     cursor: pointer;
-    transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
     border: 1px solid transparent;
     white-space: nowrap;
   }
-  .btn:active { transform: translateY(1px) scale(0.99); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:active {
+    transform: translateY(1px) scale(0.99);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   .btn-primary {
     background: var(--color-primary);
     color: #04202a;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
-  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-primary:hover {
+    filter: brightness(1.06);
+  }
 
   .btn-accent {
     background: var(--color-accent);
     color: #fff;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
-  .btn-accent:hover { filter: brightness(1.08); }
+  .btn-accent:hover {
+    filter: brightness(1.08);
+  }
 
   .btn-ghost {
     background: var(--color-surface-2);
     color: var(--color-fg);
     border-color: var(--color-border);
   }
-  .btn-ghost:hover { background: var(--color-surface-3); border-color: #33415f; }
+  .btn-ghost:hover {
+    background: var(--color-surface-3);
+    border-color: #33415f;
+  }
 
   .btn-outline {
     background: transparent;
     color: var(--color-primary);
     border-color: color-mix(in oklab, var(--color-primary) 55%, transparent);
   }
-  .btn-outline:hover { background: color-mix(in oklab, var(--color-primary) 12%, transparent); }
+  .btn-outline:hover {
+    background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+  }
 
   .chip {
     display: inline-flex;
@@ -211,9 +239,13 @@ body::before {
     padding: 0.65rem 0.85rem;
     color: var(--color-fg);
     font-size: 0.9rem;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
   }
-  .input::placeholder { color: var(--color-faint); }
+  .input::placeholder {
+    color: var(--color-faint);
+  }
   .input:focus {
     outline: none;
     border-color: var(--color-primary);
@@ -227,18 +259,31 @@ body::before {
     letter-spacing: 0.02em;
   }
 
-  .link-muted { color: var(--color-muted); transition: color 0.15s ease; }
-  .link-muted:hover { color: var(--color-primary); }
+  .link-muted {
+    color: var(--color-muted);
+    transition: color 0.15s ease;
+  }
+  .link-muted:hover {
+    color: var(--color-primary);
+  }
 
   .divider-glow {
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--color-primary),
+      transparent
+    );
     opacity: 0.5;
   }
 }
 
 /* Headings use the display font */
-h1, h2, h3, .font-display {
+h1,
+h2,
+h3,
+.font-display {
   font-family: var(--font-display);
   letter-spacing: -0.01em;
 }
@@ -247,36 +292,262 @@ h1, h2, h3, .font-display {
    Animations
    ============================================================ */
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 .animate-marquee {
   animation: marquee 32s linear infinite;
 }
-.animate-marquee:hover { animation-play-state: paused; }
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
-.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
-.animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
+.animate-pulse-glow {
+  animation: pulse-glow 2.4s ease-in-out infinite;
+}
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-fade-up { animation: fade-up 0.5s ease both; }
+.animate-fade-up {
+  animation: fade-up 0.5s ease both;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
+  }
+}
+/* Precision motion: fast tactile controls, calm surfaces, no layout shifts. */
+:root {
+  --ease-nexus: cubic-bezier(0.22, 1, 0.36, 1);
+}
+:where(button, a.btn) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+:where(button:not(:disabled), a.btn) {
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    translate 220ms var(--ease-nexus),
+    scale 160ms var(--ease-nexus),
+    filter 180ms ease;
+}
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+:where(button:not(:disabled), a.btn):active {
+  scale: 0.96;
+}
+.btn {
+  position: relative;
+  isolation: isolate;
+}
+.btn:active {
+  transform: none;
+}
+.btn > svg:not(.animate-spin) {
+  transition:
+    translate 220ms var(--ease-nexus),
+    rotate 220ms var(--ease-nexus);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:not(:disabled):hover {
+    translate: 0 -2px;
+  }
+  .btn-primary:not(:disabled):hover {
+    box-shadow: 0 4px 18px
+      color-mix(in srgb, var(--color-primary) 22%, transparent);
+  }
+  .btn-outline:not(:disabled):hover > svg {
+    translate: 3px 0;
+  }
+  .btn-ghost:not(:disabled):hover > svg {
+    rotate: -8deg;
+  }
+  button[aria-label*="Scroll left"]:hover svg {
+    translate: -3px 0;
+  }
+  button[aria-label*="Scroll right"]:hover svg {
+    translate: 3px 0;
+  }
+  button[aria-label*="Increase"]:hover svg {
+    rotate: 90deg;
+  }
+  button[aria-label*="Decrease"]:hover svg {
+    scale: 0.8 1;
+  }
+  header nav a:hover,
+  .link-muted:hover {
+    text-decoration: underline;
+    text-underline-offset: 5px;
+  }
+}
+.cart-action {
+  min-width: 0;
+}
+.cart-action[data-added="true"] {
+  background: var(--color-success);
+  color: #04202a;
+}
+.cart-check {
+  animation: nexus-check 300ms var(--ease-nexus) both;
+}
+@keyframes nexus-check {
+  from {
+    opacity: 0;
+    scale: 0.5;
+    rotate: -20deg;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    rotate: 0deg;
+  }
+}
+@keyframes nexus-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.nexus-popover {
+  animation: nexus-pop 180ms var(--ease-nexus) both;
+  transform-origin: top center;
+}
+@keyframes nexus-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes nexus-drawer-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes nexus-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes nexus-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.nexus-cart-presence[data-state="open"] .nexus-cart-panel {
+  animation: nexus-drawer-in 320ms var(--ease-nexus) both;
+}
+.nexus-cart-presence[data-state="closed"] .nexus-cart-panel {
+  animation: nexus-drawer-out 220ms ease-in both;
+}
+.nexus-cart-presence[data-state="open"] .nexus-cart-backdrop {
+  animation: nexus-backdrop-in 220ms ease both;
+}
+.nexus-cart-presence[data-state="closed"] .nexus-cart-backdrop {
+  animation: nexus-backdrop-out 220ms ease both;
+}
+.nexus-cart-presence[data-state="closed"] {
+  pointer-events: none;
+}
+@keyframes nexus-left-in {
+  from {
+    opacity: 0.5;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.nexus-mobile-drawer {
+  animation: nexus-left-in 280ms var(--ease-nexus) both;
+}
+@keyframes nexus-count {
+  from {
+    scale: 0.65;
+  }
+  55% {
+    scale: 1.2;
+  }
+  to {
+    scale: 1;
+  }
+}
+.nexus-cart-count {
+  animation: nexus-count 260ms var(--ease-nexus);
+}
+/* Disable transitions as well as keyframes for motion-sensitive visitors. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  .btn:hover,
+  .btn:active,
+  button:active {
+    translate: none;
+    scale: 1;
   }
 }

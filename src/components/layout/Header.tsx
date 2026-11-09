@@ -99,7 +99,7 @@ export function Header() {
               <PackageSearch size={13} /> Track order
             </Link>
             <Link href="/help/about" className="flex items-center gap-1.5">
-              <MapPin size={13} /> About this project
+              <MapPin size={13} /> About Nexus
             </Link>
             <Link href="/help/contact" className="flex items-center gap-1.5">
               <Headset size={13} /> Support
@@ -109,7 +109,7 @@ export function Header() {
             <span className="flex items-center gap-1.5">
               <Truck size={13} /> Free shipping over ₱5,000
             </span>
-            <span>School presentation · no real purchases</span>
+            <span>Built for your next upgrade</span>
           </div>
         </div>
       </div>
@@ -184,6 +184,8 @@ export function Header() {
               <button
                 className="flex items-center gap-2 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-2"
                 onClick={() => setAccountOpen((v) => !v)}
+                aria-label="Account menu"
+                aria-expanded={accountOpen}
               >
                 <UserIcon size={20} className="text-muted" />
                 <span className="hidden text-xs leading-tight lg:block">
@@ -205,7 +207,7 @@ export function Header() {
               </button>
 
               {accountOpen && (
-                <div className="absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-surface shadow-2xl">
+                <div className="nexus-popover absolute right-0 z-50 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-surface shadow-2xl">
                   {mounted && user ? (
                     <div className="p-1.5">
                       <div className="px-3 py-2">
@@ -233,7 +235,7 @@ export function Header() {
                       )}
                       <button
                         onClick={async () => {
-                          await logout();
+                          if (!(await logout())) return;
                           setAccountOpen(false);
                           router.push("/");
                         }}
@@ -266,7 +268,10 @@ export function Header() {
               <span className="relative">
                 <ShoppingCart size={21} />
                 {count > 0 && (
-                  <span className="absolute -right-2 -top-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[0.7rem] font-bold text-[#04202a]">
+                  <span
+                    key={count}
+                    className="nexus-cart-count absolute -right-2 -top-2 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-primary px-1 text-[0.7rem] font-bold text-[#04202a]"
+                  >
                     {count}
                   </span>
                 )}
@@ -306,16 +311,24 @@ export function Header() {
             onMouseEnter={() => setMegaOpen(true)}
             onMouseLeave={() => setMegaOpen(false)}
           >
-            <button className="flex h-11 items-center gap-2 bg-primary/10 px-3 text-sm font-semibold text-primary">
+            <button
+              onClick={() => setMegaOpen((v) => !v)}
+              aria-expanded={megaOpen}
+              className="flex h-11 items-center gap-2 bg-primary/10 px-3 text-sm font-semibold text-primary"
+            >
               <Menu size={16} /> All Categories <ChevronDown size={14} />
             </button>
             {megaOpen && (
-              <div className="absolute left-0 top-11 z-50 w-[640px] rounded-b-lg border border-border bg-surface p-3 shadow-2xl">
+              <div className="nexus-popover absolute left-0 top-11 z-50 w-[640px] rounded-b-lg border border-border bg-surface p-3 shadow-2xl">
                 <div className="grid grid-cols-3 gap-1">
                   {categories.map((c) => (
                     <Link
                       key={c.id}
                       href={`/products?category=${c.slug}`}
+                      onClick={() => {
+                        setMobileOpen(false);
+                        setMegaOpen(false);
+                      }}
                       className="group flex items-center gap-3 rounded-md p-2.5 transition-colors hover:bg-surface-2"
                     >
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-muted transition-colors group-hover:border-primary/40 group-hover:text-primary">
@@ -344,6 +357,10 @@ export function Header() {
             <Link
               key={c.id}
               href={`/products?category=${c.slug}`}
+              onClick={() => {
+                setMobileOpen(false);
+                setMegaOpen(false);
+              }}
               className="flex h-11 items-center px-3 text-sm font-medium text-muted transition-colors hover:text-primary"
             >
               {c.name}
@@ -356,8 +373,8 @@ export function Header() {
             Deals
           </Link>
           <span className="ml-auto flex items-center gap-2 text-xs text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" />{" "}
-            Presentation store
+            <span className="h-1.5 w-1.5 rounded-full bg-success" /> Explore
+            your next upgrade
           </span>
         </div>
       </div>
@@ -369,7 +386,7 @@ export function Header() {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-[85%] max-w-sm overflow-y-auto border-r border-border bg-bg p-4">
+          <div className="nexus-mobile-drawer absolute left-0 top-0 h-full w-[85%] max-w-sm overflow-y-auto border-r border-border bg-bg p-4">
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-lg font-black">NEXUS</span>
               <button
@@ -385,6 +402,10 @@ export function Header() {
                 <Link
                   key={c.id}
                   href={`/products?category=${c.slug}`}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setMegaOpen(false);
+                  }}
                   className="flex items-center gap-2 rounded-md border border-border bg-surface p-2.5 text-sm"
                 >
                   <CategoryIcon

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   ListOrdered,
@@ -22,7 +22,8 @@ const NAV = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, hydrated } = useAuth();
+  const { user, hydrated, logout } = useAuth();
+  const router = useRouter();
 
   if (!hydrated)
     return (
@@ -42,9 +43,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           You need an administrator account to access the dashboard.
         </p>
         <div className="flex gap-2">
-          <Link href="/login?next=/admin" className="btn btn-primary">
-            Sign in as admin
-          </Link>
+          {user ? (
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                if (await logout())
+                  router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+              }}
+            >
+              Switch account
+            </button>
+          ) : (
+            <Link
+              href={`/login?next=${encodeURIComponent(pathname)}`}
+              className="btn btn-primary"
+            >
+              Sign in as admin
+            </Link>
+          )}
           <Link href="/" className="btn btn-ghost">
             Back to store
           </Link>

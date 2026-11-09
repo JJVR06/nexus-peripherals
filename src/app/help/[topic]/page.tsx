@@ -3,7 +3,7 @@ import Link from "next/link";
 const topics: Record<string, { title: string; body: string }> = {
   about: {
     title: "About Nexus",
-    body: "Nexus is a student-built PC peripherals storefront for a one-day system integration presentation. Catalog entries and prices are demonstration data, not a commercial offer.",
+    body: "Nexus brings keyboards, mice, headsets, monitors, and more into one PC peripherals catalog. Compare specifications and find gear for your next setup. Checkout is currently simulated; no payment is collected.",
   },
   shipping: {
     title: "Shipping and returns",
@@ -11,11 +11,11 @@ const topics: Record<string, { title: string; body: string }> = {
   },
   warranty: {
     title: "Warranty",
-    body: "Warranty descriptions in the sample catalog are for presentation purposes. This project does not sell products or provide real manufacturer warranty services.",
+    body: "Warranty descriptions in the sample catalog are for catalog reference. This project does not sell products or provide real manufacturer warranty services.",
   },
   contact: {
     title: "Contact and support",
-    body: "For this school project, contact the project presenter directly. There is no live support team, monitored support mailbox, or physical store locator.",
+    body: "Use your account to review orders and tracking references. There is no live support team, monitored support mailbox, or physical store locator.",
   },
   faq: {
     title: "Frequently asked questions",
@@ -23,11 +23,11 @@ const topics: Record<string, { title: string; body: string }> = {
   },
   privacy: {
     title: "Privacy notice",
-    body: "Supabase stores account details, shipping information you enter, orders, and optional reviews or newsletter preferences. Use fictional shipping details for the presentation. Reviews are public; orders are visible only to their owner and administrators. Contact the presenter to remove your test account and records after the demo. Newsletter preferences are stored but no marketing emails are sent.",
+    body: "Supabase stores account details, shipping information you enter, orders, and optional reviews or newsletter preferences. Use test shipping details while checkout is simulated. Reviews are public; orders are visible only to their owner and administrators. Contact the site administrator to request removal of account data. Newsletter preferences are stored but no marketing emails are sent.",
   },
   terms: {
     title: "Demo terms",
-    body: "This is an educational demonstration, not a real store. No payment is collected, no real orders are fulfilled, and no installment, warranty, delivery, or support service is offered. Use test information rather than sensitive personal details.",
+    body: "Checkout currently operates in simulation mode. No payment is collected, no real orders are fulfilled, and no installment, warranty, delivery, or support service is offered. Use test information rather than sensitive personal details.",
   },
 };
 export default async function HelpPage({ params }: PageProps<"/help/[topic]">) {

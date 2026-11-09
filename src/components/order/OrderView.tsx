@@ -102,8 +102,8 @@ function OrderContent({ id }: { id: string }) {
               Order placed — thank you!
             </h1>
             <p className="text-sm text-muted">
-              Your order is saved to your account. This is a presentation store;
-              no payment is collected, no goods are shipped, and no confirmation
+              Your order is saved to your account. Checkout is simulated; no
+              payment is collected, no goods are shipped, and no confirmation
               email is sent.
             </p>
           </div>
