@@ -16,7 +16,9 @@ import {
 } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { getProduct, listProducts } from "@/lib/repository";
-import { categoryBySlug } from "@/lib/data/categories";
+import { useCategories } from "@/lib/hooks";
+import { reportError } from "@/lib/feedback";
+import { Reviews } from "@/components/product/Reviews";
 import { ProductImage } from "@/components/ProductImage";
 import { ProductRail } from "@/components/ProductRail";
 import { Stars } from "@/components/Stars";
@@ -25,6 +27,7 @@ import { useCart } from "@/store/cart";
 import { discountPct, formatPHP } from "@/lib/utils";
 
 export function ProductDetailClient({ slug }: { slug: string }) {
+  const categories = useCategories() ?? [];
   const router = useRouter();
   const add = useCart((s) => s.add);
   const [product, setProduct] = useState<Product | null | undefined>(undefined);
@@ -34,20 +37,30 @@ export function ProductDetailClient({ slug }: { slug: string }) {
 
   useEffect(() => {
     let active = true;
-    getProduct(slug).then((p) => {
-      if (!active) return;
-      setProduct(p ?? null);
-      if (p) {
-        listProducts().then((all) =>
-          active &&
-          setRelated(
-            all
-              .filter((x) => x.categorySlug === p.categorySlug && x.id !== p.id)
-              .slice(0, 8),
-          ),
-        );
-      }
-    });
+    getProduct(slug)
+      .then((p) => {
+        if (!active) return;
+        setProduct(p ?? null);
+        if (p) {
+          listProducts()
+            .then(
+              (all) =>
+                active &&
+                setRelated(
+                  all
+                    .filter(
+                      (x) => x.categorySlug === p.categorySlug && x.id !== p.id,
+                    )
+                    .slice(0, 8),
+                ),
+            )
+            .catch(reportError);
+        }
+      })
+      .catch((e) => {
+        reportError(e);
+        if (active) setProduct(null);
+      });
     return () => {
       active = false;
     };
@@ -67,20 +80,27 @@ export function ProductDetailClient({ slug }: { slug: string }) {
     );
   }
 
-  const category = categoryBySlug(product.categorySlug);
+  const category = categories.find((c) => c.slug === product.categorySlug);
   const off = discountPct(product.price, product.compareAtPrice);
   const soldOut = product.stock <= 0;
 
   return (
     <div className="container-nexus py-8">
       <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted">
-        <Link href="/" className="hover:text-primary">Home</Link>
+        <Link href="/" className="hover:text-primary">
+          Home
+        </Link>
         <ChevronRight size={13} />
-        <Link href="/products" className="hover:text-primary">Shop</Link>
+        <Link href="/products" className="hover:text-primary">
+          Shop
+        </Link>
         <ChevronRight size={13} />
         {category && (
           <>
-            <Link href={`/products?category=${category.slug}`} className="hover:text-primary">
+            <Link
+              href={`/products?category=${category.slug}`}
+              className="hover:text-primary"
+            >
               {category.name}
             </Link>
             <ChevronRight size={13} />
@@ -99,7 +119,11 @@ export function ProductDetailClient({ slug }: { slug: string }) {
             name={product.name}
             images={
               product.images.length
-                ? [product.images[Math.min(activeTile, product.images.length - 1)]]
+                ? [
+                    product.images[
+                      Math.min(activeTile, product.images.length - 1)
+                    ],
+                  ]
                 : undefined
             }
             className="aspect-square w-full overflow-hidden rounded-xl border border-border"
@@ -112,7 +136,9 @@ export function ProductDetailClient({ slug }: { slug: string }) {
                   key={i}
                   onClick={() => setActiveTile(i)}
                   className={`aspect-square w-20 overflow-hidden rounded-lg border transition-colors ${
-                    activeTile === i ? "border-primary" : "border-border hover:border-primary/50"
+                    activeTile === i
+                      ? "border-primary"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
                   <ProductImage
@@ -139,7 +165,11 @@ export function ProductDetailClient({ slug }: { slug: string }) {
             >
               {product.brand}
             </Link>
-            {product.isNew && <span className="chip border-primary/40 bg-primary/10 text-primary">NEW</span>}
+            {product.isNew && (
+              <span className="chip border-primary/40 bg-primary/10 text-primary">
+                NEW
+              </span>
+            )}
             {product.bestSeller && (
               <span className="chip border-warning/40 bg-warning/10 text-warning">
                 <Zap size={11} /> Best seller
@@ -147,7 +177,9 @@ export function ProductDetailClient({ slug }: { slug: string }) {
             )}
           </div>
 
-          <h1 className="font-display text-3xl font-black leading-tight">{product.name}</h1>
+          <h1 className="font-display text-3xl font-black leading-tight">
+            {product.name}
+          </h1>
 
           <div className="mt-3 flex items-center gap-3">
             <Stars rating={product.rating} size={16} />
@@ -166,11 +198,15 @@ export function ProductDetailClient({ slug }: { slug: string }) {
               </span>
             )}
             {off > 0 && (
-              <span className="chip mb-1.5 border-hot/40 bg-hot/15 text-hot">Save {off}%</span>
+              <span className="chip mb-1.5 border-hot/40 bg-hot/15 text-hot">
+                Save {off}%
+              </span>
             )}
           </div>
 
-          <p className="mt-4 text-sm leading-relaxed text-muted">{product.description}</p>
+          <p className="mt-4 text-sm leading-relaxed text-muted">
+            {product.description}
+          </p>
 
           <div className="mt-5 flex items-center gap-2 text-sm">
             <span
@@ -207,7 +243,10 @@ export function ProductDetailClient({ slug }: { slug: string }) {
                   <Plus size={16} />
                 </button>
               </div>
-              <button onClick={() => add(product, qty)} className="btn btn-primary flex-1 sm:flex-none">
+              <button
+                onClick={() => add(product, qty)}
+                className="btn btn-primary flex-1 sm:flex-none"
+              >
                 <ShoppingCart size={17} /> Add to cart
               </button>
               <button
@@ -231,10 +270,13 @@ export function ProductDetailClient({ slug }: { slug: string }) {
           <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-3">
             {[
               { icon: Truck, t: "Free shipping ₱5k+" },
-              { icon: ShieldCheck, t: "Official warranty" },
-              { icon: Undo2, t: "7-day returns" },
+              { icon: ShieldCheck, t: "Demo catalog" },
+              { icon: Undo2, t: "No real purchases" },
             ].map((perk) => (
-              <div key={perk.t} className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted">
+              <div
+                key={perk.t}
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted"
+              >
                 <perk.icon size={16} className="text-primary" /> {perk.t}
               </div>
             ))}
@@ -242,7 +284,9 @@ export function ProductDetailClient({ slug }: { slug: string }) {
 
           {/* specs */}
           <div className="mt-8">
-            <h2 className="mb-3 font-display text-lg font-bold">Specifications</h2>
+            <h2 className="mb-3 font-display text-lg font-bold">
+              Specifications
+            </h2>
             <div className="overflow-hidden rounded-xl border border-border">
               {product.specs.map((s, i) => (
                 <div
@@ -267,6 +311,7 @@ export function ProductDetailClient({ slug }: { slug: string }) {
         </div>
       </div>
 
+      <Reviews productId={product.id} />
       {related && related.length > 0 && (
         <ProductRail
           title="You might also like"

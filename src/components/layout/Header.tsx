@@ -18,12 +18,13 @@ import {
   User as UserIcon,
   X,
 } from "lucide-react";
-import { categories } from "@/lib/data/categories";
+import { useCategories } from "@/lib/hooks";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { cartCount, useCart } from "@/store/cart";
 import { useAuth } from "@/store/auth";
 
 export function Header() {
+  const categories = useCategories() ?? [];
   const router = useRouter();
   const pathname = usePathname();
   const items = useCart((s) => s.items);
@@ -39,11 +40,17 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const accountRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setMounted(true), []);
   useEffect(() => {
-    setMegaOpen(false);
-    setAccountOpen(false);
-    setMobileOpen(false);
+    const id = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(id);
+  }, []);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setMegaOpen(false);
+      setAccountOpen(false);
+      setMobileOpen(false);
+    }, 0);
+    return () => clearTimeout(id);
   }, [pathname]);
 
   useEffect(() => {
@@ -58,7 +65,8 @@ export function Header() {
   useEffect(() => {
     if (!mobileOpen) return;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
+    const onKey = (e: KeyboardEvent) =>
+      e.key === "Escape" && setMobileOpen(false);
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
@@ -84,21 +92,24 @@ export function Header() {
       <div className="hidden border-b border-border-soft bg-bg-soft text-xs text-muted md:block">
         <div className="container-nexus flex h-9 items-center justify-between">
           <div className="flex items-center gap-5">
-            <Link href="/products" className="flex items-center gap-1.5 hover:text-primary">
+            <Link
+              href="/track-order"
+              className="flex items-center gap-1.5 hover:text-primary"
+            >
               <PackageSearch size={13} /> Track order
             </Link>
-            <span className="flex items-center gap-1.5">
-              <MapPin size={13} /> Store locator
-            </span>
-            <span className="flex items-center gap-1.5">
+            <Link href="/help/about" className="flex items-center gap-1.5">
+              <MapPin size={13} /> About this project
+            </Link>
+            <Link href="/help/contact" className="flex items-center gap-1.5">
               <Headset size={13} /> Support
-            </span>
+            </Link>
           </div>
           <div className="flex items-center gap-5">
             <span className="flex items-center gap-1.5">
               <Truck size={13} /> Free shipping over ₱5,000
             </span>
-            <span>Official PH distributor warranty</span>
+            <span>School presentation · no real purchases</span>
           </div>
         </div>
       </div>
@@ -119,7 +130,9 @@ export function Header() {
             <span className="grid h-9 w-9 place-items-center rounded-md bg-primary font-display text-lg font-black text-[#04202a]">
               N
             </span>
-            <span className="font-display text-xl font-black tracking-tight">NEXUS</span>
+            <span className="font-display text-xl font-black tracking-tight">
+              NEXUS
+            </span>
           </Link>
 
           {/* search with category dropdown */}
@@ -134,12 +147,19 @@ export function Header() {
                 className="h-full appearance-none bg-transparent pl-3 pr-8 text-sm text-muted focus:outline-none"
                 aria-label="Search within category"
               >
-                <option value="" className="bg-surface">All categories</option>
+                <option value="" className="bg-surface">
+                  All categories
+                </option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.slug} className="bg-surface">{c.name}</option>
+                  <option key={c.id} value={c.slug} className="bg-surface">
+                    {c.name}
+                  </option>
                 ))}
               </select>
-              <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-faint" />
+              <ChevronDown
+                size={14}
+                className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-faint"
+              />
             </div>
             <input
               value={query}
@@ -148,7 +168,11 @@ export function Header() {
               className="flex-1 bg-transparent px-3 text-sm text-fg placeholder:text-faint focus:outline-none"
               aria-label="Search products"
             />
-            <button type="submit" className="flex items-center gap-1.5 bg-primary px-4 text-sm font-semibold text-[#04202a]" aria-label="Search">
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 bg-primary px-4 text-sm font-semibold text-[#04202a]"
+              aria-label="Search"
+            >
               <Search size={16} />
               <span className="hidden lg:inline">Search</span>
             </button>
@@ -165,7 +189,9 @@ export function Header() {
                 <span className="hidden text-xs leading-tight lg:block">
                   {mounted && user ? (
                     <>
-                      <span className="block text-faint">Hi, {user.name.split(" ")[0]}</span>
+                      <span className="block text-faint">
+                        Hi, {user.name.split(" ")[0]}
+                      </span>
                       <span className="block font-semibold">Account</span>
                     </>
                   ) : (
@@ -183,17 +209,34 @@ export function Header() {
                   {mounted && user ? (
                     <div className="p-1.5">
                       <div className="px-3 py-2">
-                        <p className="truncate text-sm font-semibold">{user.name}</p>
-                        <p className="truncate text-xs text-muted">{user.email}</p>
+                        <p className="truncate text-sm font-semibold">
+                          {user.name}
+                        </p>
+                        <p className="truncate text-xs text-muted">
+                          {user.email}
+                        </p>
                       </div>
                       <div className="my-1 h-px bg-border" />
-                      <MenuItem href="/account" icon={<UserIcon size={16} />}>My account</MenuItem>
-                      <MenuItem href="/account" icon={<Package size={16} />}>My orders</MenuItem>
+                      <MenuItem href="/account" icon={<UserIcon size={16} />}>
+                        My account
+                      </MenuItem>
+                      <MenuItem href="/account" icon={<Package size={16} />}>
+                        My orders
+                      </MenuItem>
                       {user.role === "admin" && (
-                        <MenuItem href="/admin" icon={<LayoutDashboard size={16} />}>Admin dashboard</MenuItem>
+                        <MenuItem
+                          href="/admin"
+                          icon={<LayoutDashboard size={16} />}
+                        >
+                          Admin dashboard
+                        </MenuItem>
                       )}
                       <button
-                        onClick={() => { logout(); setAccountOpen(false); router.push("/"); }}
+                        onClick={async () => {
+                          await logout();
+                          setAccountOpen(false);
+                          router.push("/");
+                        }}
                         className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm text-danger transition-colors hover:bg-surface-2"
                       >
                         <LogOut size={16} /> Sign out
@@ -201,12 +244,13 @@ export function Header() {
                     </div>
                   ) : (
                     <div className="p-1.5">
-                      <MenuItem href="/login" icon={<UserIcon size={16} />}>Sign in</MenuItem>
-                      <MenuItem href="/register" icon={<Package size={16} />}>Create account</MenuItem>
+                      <MenuItem href="/login" icon={<UserIcon size={16} />}>
+                        Sign in
+                      </MenuItem>
+                      <MenuItem href="/register" icon={<Package size={16} />}>
+                        Create account
+                      </MenuItem>
                       <div className="my-1 h-px bg-border" />
-                      <p className="px-3 py-2 text-xs text-muted">
-                        Demo admin: <span className="text-primary">admin@nexus.ph</span> / admin123
-                      </p>
                     </div>
                   )}
                 </div>
@@ -214,7 +258,11 @@ export function Header() {
             </div>
 
             {/* cart */}
-            <button onClick={openCart} className="relative flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-2" aria-label="Open cart">
+            <button
+              onClick={openCart}
+              className="relative flex items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface-2"
+              aria-label="Open cart"
+            >
               <span className="relative">
                 <ShoppingCart size={21} />
                 {count > 0 && (
@@ -225,7 +273,9 @@ export function Header() {
               </span>
               <span className="hidden text-xs leading-tight lg:block">
                 <span className="block text-faint">Cart</span>
-                <span className="block font-semibold">{count} item{count === 1 ? "" : "s"}</span>
+                <span className="block font-semibold">
+                  {count} item{count === 1 ? "" : "s"}
+                </span>
               </span>
             </button>
           </div>
@@ -234,7 +284,10 @@ export function Header() {
         {/* mobile search row */}
         <div className="container-nexus pb-3 md:hidden">
           <form onSubmit={submitSearch} className="relative">
-            <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+            <Search
+              size={17}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
+            />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -248,7 +301,11 @@ export function Header() {
       {/* category nav bar */}
       <div className="relative z-20 hidden border-b border-border bg-surface/70 backdrop-blur-xl lg:block">
         <div className="container-nexus flex h-11 items-center gap-1">
-          <div className="relative" onMouseEnter={() => setMegaOpen(true)} onMouseLeave={() => setMegaOpen(false)}>
+          <div
+            className="relative"
+            onMouseEnter={() => setMegaOpen(true)}
+            onMouseLeave={() => setMegaOpen(false)}
+          >
             <button className="flex h-11 items-center gap-2 bg-primary/10 px-3 text-sm font-semibold text-primary">
               <Menu size={16} /> All Categories <ChevronDown size={14} />
             </button>
@@ -262,11 +319,19 @@ export function Header() {
                       className="group flex items-center gap-3 rounded-md p-2.5 transition-colors hover:bg-surface-2"
                     >
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border bg-surface-2 text-muted transition-colors group-hover:border-primary/40 group-hover:text-primary">
-                        <CategoryIcon name={c.icon} size={18} strokeWidth={1.5} />
+                        <CategoryIcon
+                          name={c.icon}
+                          size={18}
+                          strokeWidth={1.5}
+                        />
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold group-hover:text-primary">{c.name}</span>
-                        <span className="block truncate text-xs text-muted">{c.tagline}</span>
+                        <span className="block truncate text-sm font-semibold group-hover:text-primary">
+                          {c.name}
+                        </span>
+                        <span className="block truncate text-xs text-muted">
+                          {c.tagline}
+                        </span>
                       </span>
                     </Link>
                   ))}
@@ -276,15 +341,23 @@ export function Header() {
           </div>
 
           {quickLinks.map((c) => (
-            <Link key={c.id} href={`/products?category=${c.slug}`} className="flex h-11 items-center px-3 text-sm font-medium text-muted transition-colors hover:text-primary">
+            <Link
+              key={c.id}
+              href={`/products?category=${c.slug}`}
+              className="flex h-11 items-center px-3 text-sm font-medium text-muted transition-colors hover:text-primary"
+            >
               {c.name}
             </Link>
           ))}
-          <Link href="/products?deals=1" className="flex h-11 items-center px-3 text-sm font-semibold text-hot transition-colors hover:brightness-110">
+          <Link
+            href="/products?deals=1"
+            className="flex h-11 items-center px-3 text-sm font-semibold text-hot transition-colors hover:brightness-110"
+          >
             Deals
           </Link>
           <span className="ml-auto flex items-center gap-2 text-xs text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" /> hello@nexus.ph
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />{" "}
+            Presentation store
           </span>
         </div>
       </div>
@@ -292,30 +365,65 @@ export function Header() {
       {/* mobile drawer menu */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <div className="absolute left-0 top-0 h-full w-[85%] max-w-sm overflow-y-auto border-r border-border bg-bg p-4">
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display text-lg font-black">NEXUS</span>
-              <button className="btn btn-ghost h-9 w-9 !px-0" onClick={() => setMobileOpen(false)}>
+              <button
+                className="btn btn-ghost h-9 w-9 !px-0"
+                onClick={() => setMobileOpen(false)}
+              >
                 <X size={18} />
               </button>
             </div>
             <p className="label mb-2">Categories</p>
             <div className="grid grid-cols-2 gap-2">
               {categories.map((c) => (
-                <Link key={c.id} href={`/products?category=${c.slug}`} className="flex items-center gap-2 rounded-md border border-border bg-surface p-2.5 text-sm">
-                  <CategoryIcon name={c.icon} size={18} strokeWidth={1.5} className="text-muted" />
+                <Link
+                  key={c.id}
+                  href={`/products?category=${c.slug}`}
+                  className="flex items-center gap-2 rounded-md border border-border bg-surface p-2.5 text-sm"
+                >
+                  <CategoryIcon
+                    name={c.icon}
+                    size={18}
+                    strokeWidth={1.5}
+                    className="text-muted"
+                  />
                   {c.name}
                 </Link>
               ))}
             </div>
             <div className="my-4 h-px bg-border" />
             <div className="flex flex-col gap-1">
-              <Link href="/products" className="rounded-md px-3 py-2.5 hover:bg-surface-2">All products</Link>
-              <Link href="/products?deals=1" className="rounded-md px-3 py-2.5 hover:bg-surface-2">Deals</Link>
-              <Link href="/account" className="rounded-md px-3 py-2.5 hover:bg-surface-2">My account</Link>
+              <Link
+                href="/products"
+                className="rounded-md px-3 py-2.5 hover:bg-surface-2"
+              >
+                All products
+              </Link>
+              <Link
+                href="/products?deals=1"
+                className="rounded-md px-3 py-2.5 hover:bg-surface-2"
+              >
+                Deals
+              </Link>
+              <Link
+                href="/account"
+                className="rounded-md px-3 py-2.5 hover:bg-surface-2"
+              >
+                My account
+              </Link>
               {mounted && user?.role === "admin" && (
-                <Link href="/admin" className="rounded-md px-3 py-2.5 hover:bg-surface-2">Admin dashboard</Link>
+                <Link
+                  href="/admin"
+                  className="rounded-md px-3 py-2.5 hover:bg-surface-2"
+                >
+                  Admin dashboard
+                </Link>
               )}
             </div>
           </div>
@@ -325,9 +433,20 @@ export function Header() {
   );
 }
 
-function MenuItem({ href, icon, children }: { href: string; icon: React.ReactNode; children: React.ReactNode }) {
+function MenuItem({
+  href,
+  icon,
+  children,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <Link href={href} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-surface-2">
+    <Link
+      href={href}
+      className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-surface-2"
+    >
       {icon}
       {children}
     </Link>

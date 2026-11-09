@@ -4,12 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, LogIn } from "lucide-react";
+import { safeNext } from "@/lib/validation";
 import { useAuth } from "@/store/auth";
 
 export function LoginForm() {
   const router = useRouter();
   const sp = useSearchParams();
-  const next = sp.get("next") || "/account";
+  const next = safeNext(sp.get("next"));
   const login = useAuth((s) => s.login);
 
   const [email, setEmail] = useState("");
@@ -26,16 +27,6 @@ export function LoginForm() {
     setLoading(false);
     if (res.ok) router.push(next);
     else setError(res.error);
-  };
-
-  const fillDemo = (kind: "admin" | "customer") => {
-    if (kind === "admin") {
-      setEmail("admin@nexus.ph");
-      setPassword("admin123");
-    } else {
-      setEmail("juan@example.com");
-      setPassword("password");
-    }
   };
 
   return (
@@ -75,25 +66,24 @@ export function LoginForm() {
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
-      <button type="submit" disabled={loading} className="btn btn-primary w-full">
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn btn-primary w-full"
+      >
         <LogIn size={16} /> {loading ? "Signing in…" : "Sign in"}
       </button>
 
-      <div className="rounded-xl border border-border bg-surface p-3 text-xs text-muted">
-        <p className="mb-2 font-semibold text-fg">Demo accounts</p>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => fillDemo("admin")} className="chip hover:text-primary">
-            Admin
-          </button>
-          <button type="button" onClick={() => fillDemo("customer")} className="chip hover:text-primary">
-            Customer
-          </button>
-        </div>
-      </div>
+      <Link href="/reset-password" className="text-sm text-primary">
+        Forgot your password?
+      </Link>
 
       <p className="text-center text-sm text-muted">
         New to Nexus?{" "}
-        <Link href="/register" className="font-semibold text-primary hover:underline">
+        <Link
+          href="/register"
+          className="font-semibold text-primary hover:underline"
+        >
           Create an account
         </Link>
       </p>

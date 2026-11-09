@@ -1,72 +1,95 @@
 "use client";
-
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { Role, User } from "@/lib/types";
-import { createUser, findUserByEmail } from "@/lib/repository";
-
+import type { User as AuthUser } from "@supabase/supabase-js";
+import type { Role } from "@/lib/types";
+import { getSupabase } from "@/lib/supabase";
+import { errorMessage } from "@/lib/validation";
 export type SessionUser = {
   id: string;
   name: string;
   email: string;
   role: Role;
 };
-
-type Result = { ok: true } | { ok: false; error: string };
-
+type Result = { ok: true; message?: string } | { ok: false; error: string };
 type AuthState = {
   user: SessionUser | null;
   hydrated: boolean;
+  error: string;
+  sync: (user: AuthUser | null) => Promise<void>;
   login: (email: string, password: string) => Promise<Result>;
-  register: (
-    name: string,
-    email: string,
-    password: string,
-  ) => Promise<Result>;
-  logout: () => void;
+  register: (name: string, email: string, password: string) => Promise<Result>;
+  logout: () => Promise<void>;
 };
-
-const toSession = (u: User): SessionUser => ({
-  id: u.id,
-  name: u.name,
-  email: u.email,
-  role: u.role,
-});
-
-export const useAuth = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      hydrated: false,
-      login: async (email, password) => {
-        const found = await findUserByEmail(email.trim());
-        if (!found) return { ok: false, error: "No account with that email." };
-        if (found.password !== password)
-          return { ok: false, error: "Incorrect password." };
-        set({ user: toSession(found) });
-        return { ok: true };
-      },
-      register: async (name, email, password) => {
-        const trimmed = email.trim();
-        const existing = await findUserByEmail(trimmed);
-        if (existing)
-          return { ok: false, error: "An account with that email exists." };
-        const user = await createUser({
-          name: name.trim(),
-          email: trimmed,
-          password,
-        });
-        set({ user: toSession(user) });
-        return { ok: true };
-      },
-      logout: () => set({ user: null }),
-    }),
-    {
-      name: "nexus.auth",
-      partialize: (state) => ({ user: state.user }),
-      onRehydrateStorage: () => (state) => {
-        if (state) state.hydrated = true;
-      },
-    },
-  ),
-);
+let revision = 0;
+export const useAuth = create<AuthState>()((set, get) => ({
+  user: null,
+  hydrated: false,
+  error: "",
+  sync: async (user) => {
+    const current = ++revision;
+    if (!user) {
+      set({ user: null, hydrated: true });
+      return;
+    }
+    try {
+      const { data, error } = await getSupabase()
+        .from("profiles")
+        .select("id,name,email,role")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      if (current === revision)
+        set({ user: data as SessionUser, hydrated: true, error: "" });
+    } catch (e) {
+      if (current === revision)
+        set({ user: null, hydrated: true, error: errorMessage(e) });
+    }
+  },
+  login: async (email, password) => {
+    try {
+      const { data, error } = await getSupabase().auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+      if (error) throw error;
+      await get().sync(data.user);
+      if (get().error) throw new Error(get().error);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e) };
+    }
+  },
+  register: async (name, email, password) => {
+    try {
+      const { data, error } = await getSupabase().auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: { name: name.trim() },
+          emailRedirectTo: window.location.origin + "/account",
+        },
+      });
+      if (error) throw error;
+      if (!data.session)
+        return {
+          ok: true,
+          message:
+            "Check your email to confirm your account, then sign in. For the presentation, your project owner can disable email confirmation in Supabase.",
+        };
+      await get().sync(data.user);
+      if (get().error) throw new Error(get().error);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e) };
+    }
+  },
+  logout: async () => {
+    const { error } = await getSupabase().auth.signOut();
+    if (error) {
+      set({ error: error.message });
+      return;
+    }
+    ++revision;
+    set({ user: null, hydrated: true, error: "" });
+  },
+}));

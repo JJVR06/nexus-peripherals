@@ -2,20 +2,17 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  ChevronDown,
-  SlidersHorizontal,
-  Star,
-  Tag,
-  X,
-} from "lucide-react";
+import { ChevronDown, SlidersHorizontal, Star, Tag, X } from "lucide-react";
 import type { Product, SortKey } from "@/lib/types";
 import { useCategories, useProducts } from "@/lib/hooks";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductCardSkeleton } from "@/components/Skeleton";
 import { cn, discountPct } from "@/lib/utils";
 
-const PRICE_RANGES: Record<string, { label: string; min?: number; max?: number }> = {
+const PRICE_RANGES: Record<
+  string,
+  { label: string; min?: number; max?: number }
+> = {
   all: { label: "Any price" },
   u3: { label: "Under ₱3,000", max: 3000 },
   "3-8": { label: "₱3,000 – ₱8,000", min: 3000, max: 8000 },
@@ -62,9 +59,7 @@ export function CatalogClient() {
 
   const allBrands = useMemo(
     () =>
-      products
-        ? Array.from(new Set(products.map((p) => p.brand))).sort()
-        : [],
+      products ? Array.from(new Set(products.map((p) => p.brand))).sort() : [],
     [products],
   );
 
@@ -77,9 +72,11 @@ export function CatalogClient() {
       if (range.min !== undefined && p.price < range.min) return false;
       if (range.max !== undefined && p.price > range.max) return false;
       if (minRating && p.rating < minRating) return false;
-      if (dealsOnly && discountPct(p.price, p.compareAtPrice) === 0) return false;
+      if (dealsOnly && discountPct(p.price, p.compareAtPrice) === 0)
+        return false;
       if (q) {
-        const hay = `${p.name} ${p.brand} ${p.categorySlug} ${p.tags.join(" ")}`.toLowerCase();
+        const hay =
+          `${p.name} ${p.brand} ${p.categorySlug} ${p.tags.join(" ")}`.toLowerCase();
         if (!hay.includes(q.toLowerCase())) return false;
       }
       return true;
@@ -90,7 +87,12 @@ export function CatalogClient() {
 
   const activeCategory = categories?.find((c) => c.slug === category);
   const hasFilters =
-    !!category || brands.length > 0 || priceKey !== "all" || minRating > 0 || dealsOnly || !!q;
+    !!category ||
+    brands.length > 0 ||
+    priceKey !== "all" ||
+    minRating > 0 ||
+    dealsOnly ||
+    !!q;
 
   const title = q
     ? `Results for “${q}”`
@@ -139,7 +141,9 @@ export function CatalogClient() {
               <SlidersHorizontal size={16} /> Filters
             </button>
             <span className="text-sm text-muted">
-              {filtered ? `${filtered.length} product${filtered.length === 1 ? "" : "s"}` : "…"}
+              {filtered
+                ? `${filtered.length} product${filtered.length === 1 ? "" : "s"}`
+                : "…"}
             </span>
             <div className="relative ml-auto">
               <select
@@ -164,20 +168,39 @@ export function CatalogClient() {
           {/* active filter chips */}
           {hasFilters && (
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              {q && <FilterChip label={`“${q}”`} onClear={() => setParam("q", null)} />}
+              {q && (
+                <FilterChip
+                  label={`“${q}”`}
+                  onClear={() => setParam("q", null)}
+                />
+              )}
               {activeCategory && (
-                <FilterChip label={activeCategory.name} onClear={() => setParam("category", null)} />
+                <FilterChip
+                  label={activeCategory.name}
+                  onClear={() => setParam("category", null)}
+                />
               )}
               {brands.map((b) => (
                 <FilterChip key={b} label={b} onClear={() => toggleBrand(b)} />
               ))}
               {priceKey !== "all" && (
-                <FilterChip label={PRICE_RANGES[priceKey]?.label ?? ""} onClear={() => setParam("price", null)} />
+                <FilterChip
+                  label={PRICE_RANGES[priceKey]?.label ?? ""}
+                  onClear={() => setParam("price", null)}
+                />
               )}
               {minRating > 0 && (
-                <FilterChip label={`${minRating}★ & up`} onClear={() => setParam("rating", null)} />
+                <FilterChip
+                  label={`${minRating}★ & up`}
+                  onClear={() => setParam("rating", null)}
+                />
               )}
-              {dealsOnly && <FilterChip label="On sale" onClear={() => setParam("deals", null)} />}
+              {dealsOnly && (
+                <FilterChip
+                  label="On sale"
+                  onClear={() => setParam("deals", null)}
+                />
+              )}
               <button
                 onClick={() => router.push("/products", { scroll: false })}
                 className="text-xs font-semibold text-primary hover:underline"
@@ -197,11 +220,16 @@ export function CatalogClient() {
           ) : filtered.length === 0 ? (
             <div className="card flex flex-col items-center gap-3 py-16 text-center">
               <Tag size={40} className="text-faint" />
-              <p className="font-display text-lg font-semibold">No products match</p>
+              <p className="font-display text-lg font-semibold">
+                No products match
+              </p>
               <p className="max-w-xs text-sm text-muted">
                 Try removing a filter or searching for something else.
               </p>
-              <button onClick={() => router.push("/products", { scroll: false })} className="btn btn-outline mt-1">
+              <button
+                onClick={() => router.push("/products", { scroll: false })}
+                className="btn btn-outline mt-1"
+              >
                 Reset filters
               </button>
             </div>
@@ -218,11 +246,17 @@ export function CatalogClient() {
       {/* mobile filter drawer */}
       {mobileFilters && (
         <div className="fixed inset-0 z-[60] lg:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileFilters(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileFilters(false)}
+          />
           <div className="absolute left-0 top-0 h-full w-[85%] max-w-xs overflow-y-auto border-r border-border bg-bg p-4">
             <div className="mb-4 flex items-center justify-between">
               <span className="font-display font-bold">Filters</span>
-              <button className="btn btn-ghost h-9 w-9 !px-0" onClick={() => setMobileFilters(false)}>
+              <button
+                className="btn btn-ghost h-9 w-9 !px-0"
+                onClick={() => setMobileFilters(false)}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -237,7 +271,10 @@ export function CatalogClient() {
               setParam={setParam}
               toggleBrand={toggleBrand}
             />
-            <button onClick={() => setMobileFilters(false)} className="btn btn-primary mt-4 w-full">
+            <button
+              onClick={() => setMobileFilters(false)}
+              className="btn btn-primary mt-4 w-full"
+            >
               Show results
             </button>
           </div>
@@ -257,17 +294,24 @@ function sortProducts(list: Product[], sort: SortKey) {
     case "rating":
       return copy.sort((a, b) => b.rating - a.rating);
     case "newest":
-      return copy.sort((a, b) => Number(!!b.isNew) - Number(!!a.isNew));
+      return copy.sort((a, b) =>
+        (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+      );
     default:
       return copy.sort(
         (a, b) =>
-          Number(!!b.featured) - Number(!!a.featured) ||
-          b.rating - a.rating,
+          Number(!!b.featured) - Number(!!a.featured) || b.rating - a.rating,
       );
   }
 }
 
-function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+function FilterChip({
+  label,
+  onClear,
+}: {
+  label: string;
+  onClear: () => void;
+}) {
   return (
     <span className="chip border-primary/40 bg-primary/10 text-primary">
       {label}
@@ -358,7 +402,15 @@ function FiltersPanel({
               key={r}
               checked={minRating === r}
               label={r === 0 ? "All ratings" : `${r}★ & up`}
-              icon={r > 0 ? <Star size={13} className="text-warning" fill="currentColor" /> : undefined}
+              icon={
+                r > 0 ? (
+                  <Star
+                    size={13}
+                    className="text-warning"
+                    fill="currentColor"
+                  />
+                ) : undefined
+              }
               onClick={() => setParam("rating", r === 0 ? null : String(r))}
             />
           ))}
@@ -380,7 +432,13 @@ function FiltersPanel({
   );
 }
 
-function Group({ title, children }: { title: string; children: React.ReactNode }) {
+function Group({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <p className="mb-2 font-display text-sm font-bold">{title}</p>

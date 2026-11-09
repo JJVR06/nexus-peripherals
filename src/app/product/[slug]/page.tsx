@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
-import { productBySlug } from "@/lib/data/products";
+import { getProduct } from "@/lib/repository";
 
 export async function generateMetadata({
   params,
 }: PageProps<"/product/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const product = productBySlug(slug);
+  const product = await getProduct(slug).catch(() => undefined);
   if (!product) return { title: "Product" };
   return {
     title: `${product.brand} ${product.name}`,

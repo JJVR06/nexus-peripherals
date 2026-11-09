@@ -1,216 +1,223 @@
-/**
- * ============================================================================
- *  DATA REPOSITORY — the single source of truth for all persistence.
- * ============================================================================
- *
- *  Every page talks to the app through this module and NEVER touches the
- *  storage mechanism directly. Today it is backed by the browser's
- *  localStorage (seeded from the static catalog), which means the whole app
- *  runs with zero backend.
- *
- *  To go live with Firebase later you only reimplement the functions below
- *  using Firestore (e.g. `getDocs(collection(db, "products"))`) and the rest
- *  of the UI keeps working unchanged. See `firebase.ts.example` / README.
- * ============================================================================
- */
-import type {
-  Category,
-  Order,
-  OrderStatus,
-  Product,
-  User,
-} from "@/lib/types";
-import { products as seedProducts } from "@/lib/data/products";
-import { categories as seedCategories } from "@/lib/data/categories";
-import { seedUsers } from "@/lib/data/users";
-import { shortId } from "@/lib/utils";
-
-/** Bump this to force a reseed of catalog data after editing the seeds. */
-const SEED_VERSION = "v2";
-const K = {
-  products: `nexus.products.${SEED_VERSION}`,
-  categories: `nexus.categories.${SEED_VERSION}`,
-  orders: `nexus.orders.${SEED_VERSION}`,
-  users: `nexus.users.${SEED_VERSION}`,
+import type { Category, Order, OrderStatus, Product } from "@/lib/types";
+import { getSupabase } from "@/lib/supabase";
+import {
+  validateCategory,
+  validateProduct,
+  errorMessage,
+} from "@/lib/validation";
+type Row = {
+  version?: number;
+  id: string;
+  data: Record<string, unknown>;
+  created_at?: string;
+  user_id?: string;
+  status?: OrderStatus;
 };
-
-const isBrowser = () => typeof window !== "undefined";
-
-function read<T>(key: string, seed: T[]): T[] {
-  if (!isBrowser()) return structuredClone(seed);
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) {
-      window.localStorage.setItem(key, JSON.stringify(seed));
-      return structuredClone(seed);
-    }
-    return JSON.parse(raw) as T[];
-  } catch {
-    return structuredClone(seed);
-  }
+function unwrap<T>(row: Row): T {
+  return {
+    ...row.data,
+    id: row.id,
+    ...(row.version !== undefined ? { version: row.version } : {}),
+    ...(row.created_at ? { createdAt: row.created_at } : {}),
+    ...(row.user_id ? { userId: row.user_id, status: row.status } : {}),
+  } as T;
 }
-
-function write<T>(key: string, value: T[]) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+function check(error: unknown) {
+  if (error) throw new Error(errorMessage(error));
 }
-
-/** Simulate a tiny network delay so loading states are exercised. */
-const tick = <T>(value: T, ms = 120): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(value), ms));
-
-/* --------------------------------- Products -------------------------------- */
-
-export async function listProducts(): Promise<Product[]> {
-  return tick(read<Product>(K.products, seedProducts));
+async function list<T>(table: string): Promise<T[]> {
+  const { data, error } = await getSupabase().from(table).select("*");
+  check(error);
+  return (data as Row[]).map(unwrap<T>);
 }
-
-export async function getProduct(slug: string): Promise<Product | undefined> {
-  const all = read<Product>(K.products, seedProducts);
-  return tick(all.find((p) => p.slug === slug));
+async function save<T>(
+  table: string,
+  value: object,
+  id?: string,
+  version?: number,
+): Promise<T> {
+  let query = id
+    ? getSupabase().from(table).update({ data: value }).eq("id", id)
+    : getSupabase().from(table).insert({ data: value });
+  if (id && version !== undefined) query = query.eq("version", version);
+  const { data, error } = await query.select().single();
+  if (error?.code === "PGRST116")
+    throw new Error(
+      "This record changed or was removed. Close the editor, refresh the page, and try again.",
+    );
+  check(error);
+  return unwrap<T>(data as Row);
 }
-
-export async function getProductById(id: string): Promise<Product | undefined> {
-  const all = read<Product>(K.products, seedProducts);
-  return tick(all.find((p) => p.id === id));
+async function remove(table: string, id: string) {
+  const { data, error } = await getSupabase()
+    .from(table)
+    .delete()
+    .eq("id", id)
+    .select("id");
+  check(error);
+  if (!data?.length) throw new Error("Entry not found or access denied.");
 }
-
-export async function createProduct(
-  data: Omit<Product, "id">,
-): Promise<Product> {
-  const all = read<Product>(K.products, seedProducts);
-  const product: Product = { ...data, id: shortId("PRD-") };
-  all.unshift(product);
-  write(K.products, all);
-  return tick(product);
+export const listProducts = () => list<Product>("products");
+export const listCategories = () => list<Category>("categories");
+export async function getProduct(slug: string) {
+  const { data, error } = await getSupabase()
+    .from("products")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  check(error);
+  return data ? unwrap<Product>(data) : undefined;
 }
-
+export async function getProductById(id: string) {
+  const { data, error } = await getSupabase()
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  check(error);
+  return data ? unwrap<Product>(data) : undefined;
+}
+export async function createProduct(value: Omit<Product, "id">) {
+  validateProduct(value);
+  return save<Product>("products", value);
+}
 export async function updateProduct(
   id: string,
-  patch: Partial<Product>,
-): Promise<Product | undefined> {
-  const all = read<Product>(K.products, seedProducts);
-  const idx = all.findIndex((p) => p.id === id);
-  if (idx === -1) return tick(undefined);
-  all[idx] = { ...all[idx], ...patch, id };
-  write(K.products, all);
-  return tick(all[idx]);
+  value: Omit<Product, "id">,
+  version: number,
+) {
+  validateProduct(value);
+  return save<Product>("products", value, id, version);
 }
-
-export async function deleteProduct(id: string): Promise<void> {
-  const all = read<Product>(K.products, seedProducts).filter((p) => p.id !== id);
-  write(K.products, all);
-  return tick(undefined);
+export const deleteProduct = (id: string) => remove("products", id);
+export async function createCategory(value: Omit<Category, "id">) {
+  validateCategory(value);
+  return save<Category>("categories", value);
 }
-
-/* ------------------------------- Categories -------------------------------- */
-
-export async function listCategories(): Promise<Category[]> {
-  return tick(read<Category>(K.categories, seedCategories));
+export async function updateCategory(id: string, value: Omit<Category, "id">) {
+  validateCategory(value);
+  return save<Category>("categories", value, id);
 }
-
-export async function createCategory(
-  data: Omit<Category, "id">,
-): Promise<Category> {
-  const all = read<Category>(K.categories, seedCategories);
-  const category: Category = { ...data, id: shortId("CAT-") };
-  all.push(category);
-  write(K.categories, all);
-  return tick(category);
+export const deleteCategory = (id: string) => remove("categories", id);
+export async function listOrders() {
+  const { data, error } = await getSupabase()
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+  check(error);
+  return (data as Row[]).map(unwrap<Order>);
 }
-
-export async function updateCategory(
-  id: string,
-  patch: Partial<Category>,
-): Promise<Category | undefined> {
-  const all = read<Category>(K.categories, seedCategories);
-  const idx = all.findIndex((c) => c.id === id);
-  if (idx === -1) return tick(undefined);
-  all[idx] = { ...all[idx], ...patch, id };
-  write(K.categories, all);
-  return tick(all[idx]);
+export async function listOrdersByUser(userId: string) {
+  return (await listOrders()).filter((o) => o.userId === userId);
 }
-
-export async function deleteCategory(id: string): Promise<void> {
-  const all = read<Category>(K.categories, seedCategories).filter(
-    (c) => c.id !== id,
-  );
-  write(K.categories, all);
-  return tick(undefined);
+export async function getOrder(id: string) {
+  const { data, error } = await getSupabase()
+    .from("orders")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  check(error);
+  return data ? unwrap<Order>(data) : undefined;
 }
-
-/* --------------------------------- Orders ---------------------------------- */
-
-export async function listOrders(): Promise<Order[]> {
-  const all = read<Order>(K.orders, []);
-  return tick(
-    [...all].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-  );
+export async function createOrder(data: {
+  items: { productId: string; quantity: number }[];
+  customer: Order["customer"];
+  paymentMethod: string;
+  requestKey: string;
+}): Promise<Order> {
+  const { data: result, error } = await getSupabase().rpc("place_order", {
+    p_items: data.items.map(({ productId, quantity }) => ({
+      productId,
+      quantity,
+    })),
+    p_customer: data.customer,
+    p_payment: data.paymentMethod,
+    p_request_key: data.requestKey,
+  });
+  check(error);
+  return result as Order;
 }
-
-export async function listOrdersByUser(userId: string): Promise<Order[]> {
-  const all = await listOrders();
-  return all.filter((o) => o.userId === userId);
-}
-
-export async function getOrder(id: string): Promise<Order | undefined> {
-  const all = read<Order>(K.orders, []);
-  return tick(all.find((o) => o.id === id));
-}
-
-export async function createOrder(
-  data: Omit<Order, "id" | "createdAt" | "status"> & { status?: OrderStatus },
-): Promise<Order> {
-  const all = read<Order>(K.orders, []);
-  const order: Order = {
-    ...data,
-    status: data.status ?? "pending",
-    id: shortId("NX-"),
-    createdAt: new Date().toISOString(),
-  };
-  all.push(order);
-  write(K.orders, all);
-  return tick(order);
-}
-
 export async function updateOrderStatus(
   id: string,
   status: OrderStatus,
-): Promise<Order | undefined> {
-  const all = read<Order>(K.orders, []);
-  const idx = all.findIndex((o) => o.id === id);
-  if (idx === -1) return tick(undefined);
-  all[idx] = { ...all[idx], status };
-  write(K.orders, all);
-  return tick(all[idx]);
+  tracking?: string,
+): Promise<Order> {
+  const { data, error } = await getSupabase().rpc("change_order_status", {
+    p_id: id,
+    p_status: status,
+    p_tracking: tracking ?? null,
+  });
+  check(error);
+  return data as Order;
 }
-
-/* ---------------------------------- Users ---------------------------------- */
-
-export async function listUsers(): Promise<User[]> {
-  return tick(read<User>(K.users, seedUsers));
+export async function listOrderEvents(
+  id: string,
+): Promise<{ status: string; created_at: string }[]> {
+  const { data, error } = await getSupabase()
+    .from("order_events")
+    .select("status,created_at")
+    .eq("order_id", id)
+    .order("created_at");
+  check(error);
+  return data ?? [];
 }
-
-export async function findUserByEmail(
-  email: string,
-): Promise<User | undefined> {
-  const all = read<User>(K.users, seedUsers);
-  return tick(
-    all.find((u) => u.email.toLowerCase() === email.toLowerCase()),
-  );
+export async function subscribeNewsletter() {
+  const {
+    data: { user },
+    error: authError,
+  } = await getSupabase().auth.getUser();
+  check(authError);
+  if (!user) throw new Error("Sign in to save your newsletter preference.");
+  const { error } = await getSupabase()
+    .from("subscriptions")
+    .insert({ user_id: user.id, email: user.email });
+  if (error?.code !== "23505") check(error);
 }
-
-export async function createUser(
-  data: Omit<User, "id" | "createdAt" | "role"> & { role?: User["role"] },
-): Promise<User> {
-  const all = read<User>(K.users, seedUsers);
-  const user: User = {
-    ...data,
-    role: data.role ?? "customer",
-    id: shortId("USR-"),
-    createdAt: new Date().toISOString(),
-  };
-  all.push(user);
-  write(K.users, all);
-  return tick(user);
+export type Review = {
+  id: string;
+  rating: number;
+  body: string;
+  created_at: string;
+};
+export async function listReviews(productId: string): Promise<Review[]> {
+  const { data, error } = await getSupabase()
+    .from("reviews")
+    .select("id,rating,body,created_at")
+    .eq("product_id", productId)
+    .order("created_at", { ascending: false });
+  check(error);
+  return data ?? [];
+}
+export async function saveReview(
+  productId: string,
+  rating: number,
+  body: string,
+) {
+  const {
+    data: { user },
+    error,
+  } = await getSupabase().auth.getUser();
+  check(error);
+  if (!user) throw new Error("Sign in to review this product.");
+  const { data: existing, error: readError } = await getSupabase()
+    .from("reviews")
+    .select("id")
+    .eq("product_id", productId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  check(readError);
+  const result = existing
+    ? await getSupabase()
+        .from("reviews")
+        .update({ rating, body: body.trim() })
+        .eq("id", existing.id)
+    : await getSupabase()
+        .from("reviews")
+        .insert({
+          product_id: productId,
+          user_id: user.id,
+          rating,
+          body: body.trim(),
+        });
+  check(result.error);
 }

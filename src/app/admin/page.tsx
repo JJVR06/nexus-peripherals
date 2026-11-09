@@ -13,6 +13,7 @@ import {
 import type { Category, Order, Product } from "@/lib/types";
 import { listCategories, listOrders, listProducts } from "@/lib/repository";
 import { StatusBadge } from "@/components/order/StatusBadge";
+import { reportError } from "@/lib/feedback";
 import { formatPHP } from "@/lib/utils";
 
 export default function AdminDashboard() {
@@ -21,13 +22,39 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<Category[] | null>(null);
 
   useEffect(() => {
-    listProducts().then(setProducts);
-    listOrders().then(setOrders);
-    listCategories().then(setCategories);
+    const refresh = () => {
+      listProducts()
+        .then(setProducts)
+        .catch((e) => {
+          reportError(e);
+          setProducts([]);
+        });
+      listOrders()
+        .then(setOrders)
+        .catch((e) => {
+          reportError(e);
+          setOrders([]);
+        });
+      listCategories()
+        .then(setCategories)
+        .catch((e) => {
+          reportError(e);
+          setCategories([]);
+        });
+    };
+    refresh();
+    const timer = setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
   }, []);
 
   const revenue =
-    orders?.filter((o) => o.status !== "cancelled").reduce((s, o) => s + o.total, 0) ?? 0;
+    orders
+      ?.filter((o) => o.status === "delivered")
+      .reduce((s, o) => s + o.total, 0) ?? 0;
   const lowStock = products?.filter((p) => p.stock <= 10) ?? [];
 
   return (
@@ -38,10 +65,30 @@ export default function AdminDashboard() {
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Tile icon={<Wallet size={18} />} label="Revenue" value={orders ? formatPHP(revenue) : "…"} tone="primary" />
-        <Tile icon={<ListOrdered size={18} />} label="Orders" value={orders ? String(orders.length) : "…"} tone="accent" />
-        <Tile icon={<Package size={18} />} label="Products" value={products ? String(products.length) : "…"} tone="success" />
-        <Tile icon={<AlertTriangle size={18} />} label="Low stock" value={products ? String(lowStock.length) : "…"} tone="warning" />
+        <Tile
+          icon={<Wallet size={18} />}
+          label="Delivered order value"
+          value={orders ? formatPHP(revenue) : "…"}
+          tone="primary"
+        />
+        <Tile
+          icon={<ListOrdered size={18} />}
+          label="Orders"
+          value={orders ? String(orders.length) : "…"}
+          tone="accent"
+        />
+        <Tile
+          icon={<Package size={18} />}
+          label="Products"
+          value={products ? String(products.length) : "…"}
+          tone="success"
+        />
+        <Tile
+          icon={<AlertTriangle size={18} />}
+          label="Low stock"
+          value={products ? String(lowStock.length) : "…"}
+          tone="warning"
+        />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -49,14 +96,19 @@ export default function AdminDashboard() {
         <section className="panel overflow-hidden">
           <div className="flex items-center justify-between border-b border-border p-4">
             <h2 className="font-display font-bold">Recent orders</h2>
-            <Link href="/admin/orders" className="flex items-center gap-1 text-sm text-primary hover:gap-1.5">
+            <Link
+              href="/admin/orders"
+              className="flex items-center gap-1 text-sm text-primary hover:gap-1.5"
+            >
               View all <ArrowUpRight size={14} />
             </Link>
           </div>
           {!orders ? (
             <p className="p-8 text-center text-muted">Loading…</p>
           ) : orders.length === 0 ? (
-            <p className="p-8 text-center text-muted">No orders yet. Place one from the store to see it here.</p>
+            <p className="p-8 text-center text-muted">
+              No orders yet. Place one from the store to see it here.
+            </p>
           ) : (
             <div className="divide-y divide-border">
               {orders.slice(0, 6).map((o) => (
@@ -67,7 +119,9 @@ export default function AdminDashboard() {
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium">{o.id}</p>
-                    <p className="truncate text-xs text-muted">{o.customer.name} · {o.items.length} items</p>
+                    <p className="truncate text-xs text-muted">
+                      {o.customer.name} · {o.items.length} items
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <StatusBadge status={o.status} />
@@ -85,18 +139,32 @@ export default function AdminDashboard() {
             <h2 className="flex items-center gap-2 font-display font-bold">
               <TrendingUp size={16} className="text-warning" /> Low stock
             </h2>
-            <Link href="/admin/products" className="text-sm text-primary hover:underline">Manage</Link>
+            <Link
+              href="/admin/products"
+              className="text-sm text-primary hover:underline"
+            >
+              Manage
+            </Link>
           </div>
           {!products ? (
             <p className="p-8 text-center text-muted">Loading…</p>
           ) : lowStock.length === 0 ? (
-            <p className="p-8 text-center text-muted">All products are well-stocked. 🎉</p>
+            <p className="p-8 text-center text-muted">
+              All products are well-stocked. 🎉
+            </p>
           ) : (
             <div className="divide-y divide-border">
               {lowStock.slice(0, 7).map((p) => (
-                <div key={p.id} className="flex items-center justify-between gap-3 p-3.5 text-sm">
-                  <span className="min-w-0 truncate">{p.brand} {p.name}</span>
-                  <span className={p.stock <= 0 ? "text-danger" : "text-warning"}>
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 p-3.5 text-sm"
+                >
+                  <span className="min-w-0 truncate">
+                    {p.brand} {p.name}
+                  </span>
+                  <span
+                    className={p.stock <= 0 ? "text-danger" : "text-warning"}
+                  >
                     {p.stock} left
                   </span>
                 </div>
@@ -107,7 +175,8 @@ export default function AdminDashboard() {
       </div>
 
       <p className="mt-6 text-xs text-muted">
-        {categories ? `${categories.length} categories` : ""} · Data is stored locally (Firebase-ready). See README to connect Firestore.
+        {categories ? `${categories.length} categories` : ""} · Shared Supabase
+        database · simulated payments · no real fulfillment.
       </p>
     </div>
   );
@@ -132,7 +201,9 @@ function Tile({
   };
   return (
     <div className="panel p-5">
-      <span className={`grid h-10 w-10 place-items-center rounded-xl border border-border bg-surface-2 ${toneMap[tone]}`}>
+      <span
+        className={`grid h-10 w-10 place-items-center rounded-xl border border-border bg-surface-2 ${toneMap[tone]}`}
+      >
         {icon}
       </span>
       <p className="mt-3 text-xs text-muted">{label}</p>

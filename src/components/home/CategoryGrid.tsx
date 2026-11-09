@@ -1,8 +1,10 @@
+"use client";
 import Link from "next/link";
-import { categories } from "@/lib/data/categories";
+import { useCategories } from "@/lib/hooks";
 import { CategoryIcon } from "@/components/CategoryIcon";
 
 export function CategoryGrid() {
+  const categories = useCategories() ?? [];
   return (
     <section className="container-nexus py-10">
       <h2 className="mb-5 font-display text-xl font-bold sm:text-2xl">

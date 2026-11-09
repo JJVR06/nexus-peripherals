@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { validQuantity } from "@/lib/validation";
 import type { CartItem, Product } from "@/lib/types";
 
 type CartState = {
@@ -11,6 +12,7 @@ type CartState = {
   add: (product: Product, qty?: number) => void;
   remove: (productId: string) => void;
   setQty: (productId: string, qty: number) => void;
+  reconcile: (products: Product[]) => void;
   clear: () => void;
   open: () => void;
   close: () => void;
@@ -25,9 +27,8 @@ export const useCart = create<CartState>()(
       hydrated: false,
       add: (product, qty = 1) =>
         set((state) => {
-          const existing = state.items.find(
-            (i) => i.productId === product.id,
-          );
+          if (!validQuantity(qty) || product.stock <= 0) return state;
+          const existing = state.items.find((i) => i.productId === product.id);
           if (existing) {
             return {
               isOpen: true,
@@ -35,7 +36,10 @@ export const useCart = create<CartState>()(
                 i.productId === product.id
                   ? {
                       ...i,
-                      quantity: Math.min(i.quantity + qty, product.stock),
+                      price: product.price,
+                      stock: product.stock,
+                      name: product.name,
+                      quantity: Math.min(i.quantity + qty, product.stock, 1000),
                     }
                   : i,
               ),
@@ -63,10 +67,35 @@ export const useCart = create<CartState>()(
           items: state.items
             .map((i) =>
               i.productId === productId
-                ? { ...i, quantity: Math.max(1, Math.min(qty, i.stock)) }
+                ? {
+                    ...i,
+                    quantity: Number.isFinite(qty)
+                      ? Math.max(0, Math.min(Math.floor(qty), i.stock, 1000))
+                      : i.quantity,
+                  }
                 : i,
             )
             .filter((i) => i.quantity > 0),
+        })),
+      reconcile: (products) =>
+        set((state) => ({
+          items: state.items.flatMap((item) => {
+            const p = products.find((p) => p.id === item.productId);
+            if (!p || p.stock <= 0 || !validQuantity(item.quantity)) return [];
+            return [
+              {
+                ...item,
+                name: p.name,
+                brand: p.brand,
+                slug: p.slug,
+                categorySlug: p.categorySlug,
+                swatch: p.swatch,
+                price: p.price,
+                stock: p.stock,
+                quantity: Math.min(item.quantity, p.stock),
+              },
+            ];
+          }),
         })),
       clear: () => set({ items: [] }),
       open: () => set({ isOpen: true }),
@@ -74,10 +103,22 @@ export const useCart = create<CartState>()(
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
     }),
     {
-      name: "nexus.cart",
+      name: "nexus.cart.shared.v1",
       partialize: (state) => ({ items: state.items }),
       onRehydrateStorage: () => (state) => {
-        if (state) state.hydrated = true;
+        if (state) {
+          state.items = Array.isArray(state.items)
+            ? state.items.filter(
+                (i) =>
+                  i &&
+                  validQuantity(i.quantity) &&
+                  Number.isFinite(i.price) &&
+                  i.price > 0,
+              )
+            : [];
+          state.hydrated = true;
+        } else
+          queueMicrotask(() => useCart.setState({ items: [], hydrated: true }));
       },
     },
   ),

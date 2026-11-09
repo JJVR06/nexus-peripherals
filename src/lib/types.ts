@@ -12,6 +12,8 @@ export type Category = {
 export type Spec = { label: string; value: string };
 
 export type Product = {
+  createdAt?: string;
+  version?: number;
   id: string;
   slug: string;
   name: string;
@@ -56,11 +58,7 @@ export type OrderItem = {
 };
 
 export type OrderStatus =
-  | "pending"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+  "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 
 export type Order = {
   id: string;
@@ -79,24 +77,12 @@ export type Order = {
     zip: string;
   };
   paymentMethod: string;
+  paymentStatus?: string;
+  trackingNumber?: string;
   createdAt: string;
 };
 
 export type Role = "customer" | "admin";
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  /** plaintext for the local demo only — replaced by Firebase Auth later */
-  password: string;
-  role: Role;
-  createdAt: string;
-};
-
 export type SortKey =
-  | "featured"
-  | "price-asc"
-  | "price-desc"
-  | "rating"
-  | "newest";
+  "featured" | "price-asc" | "price-desc" | "rating" | "newest";

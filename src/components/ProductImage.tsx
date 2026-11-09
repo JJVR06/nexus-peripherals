@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { categories } from "@/lib/data/categories";
+import { useCategories } from "@/lib/hooks";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { cn } from "@/lib/utils";
 
@@ -33,13 +33,14 @@ export function ProductImage({
   showBrand?: boolean;
   sizes?: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const categories = useCategories() ?? [];
+  const [failedSrc, setFailedSrc] = useState<string | undefined>(undefined);
+  const [loadedSrc, setLoadedSrc] = useState<string | undefined>(undefined);
   const iconName =
     categories.find((c) => c.slug === categorySlug)?.icon ?? "Boxes";
   const src = images?.[0];
 
-  if (src && !failed) {
+  if (src && src !== failedSrc) {
     return (
       <div className={cn("relative overflow-hidden bg-[#0e1018]", className)}>
         <Image
@@ -47,11 +48,11 @@ export function ProductImage({
           alt={`${brand} ${name}`}
           fill
           sizes={sizes}
-          onLoad={() => setLoaded(true)}
-          onError={() => setFailed(true)}
+          onLoad={() => setLoadedSrc(src)}
+          onError={() => setFailedSrc(src)}
           className={cn(
             "object-cover transition-opacity duration-500",
-            loaded ? "opacity-100" : "opacity-0",
+            loadedSrc === src ? "opacity-100" : "opacity-0",
           )}
         />
       </div>

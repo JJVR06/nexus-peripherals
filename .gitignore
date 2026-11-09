@@ -55,3 +55,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Browser verification artifacts
+.playwright-mcp/
+playwright-report/
+test-results/

@@ -25,7 +25,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const { user, hydrated } = useAuth();
 
   if (!hydrated)
-    return <div className="container-nexus py-24 text-center text-muted">Loading…</div>;
+    return (
+      <div className="container-nexus py-24 text-center text-muted">
+        Loading…
+      </div>
+    );
 
   if (!user || user.role !== "admin") {
     return (
@@ -38,12 +42,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           You need an administrator account to access the dashboard.
         </p>
         <div className="flex gap-2">
-          <Link href="/login?next=/admin" className="btn btn-primary">Sign in as admin</Link>
-          <Link href="/" className="btn btn-ghost">Back to store</Link>
+          <Link href="/login?next=/admin" className="btn btn-primary">
+            Sign in as admin
+          </Link>
+          <Link href="/" className="btn btn-ghost">
+            Back to store
+          </Link>
         </div>
-        <p className="mt-2 text-xs text-muted">
-          Demo admin: <span className="text-primary">admin@nexus.ph</span> / admin123
-        </p>
       </div>
     );
   }
@@ -56,7 +61,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-sm font-black text-[#04121a]">
               N
             </span>
-            <span className="font-display text-sm font-bold">Admin Console</span>
+            <span className="font-display text-sm font-bold">
+              Admin Console
+            </span>
           </div>
           <nav className="flex flex-col gap-1">
             {NAV.map((n) => {

@@ -13,6 +13,7 @@ import {
 import { ProductImage } from "@/components/ProductImage";
 import { Modal } from "@/components/admin/Modal";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { reportError, dataChanged } from "@/lib/feedback";
 import { formatPHP } from "@/lib/utils";
 
 export default function AdminProductsPage() {
@@ -24,11 +25,17 @@ export default function AdminProductsPage() {
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const refresh = () => listProducts().then(setProducts);
+  const refresh = () =>
+    listProducts()
+      .then(setProducts)
+      .catch((e) => {
+        reportError(e);
+        setProducts([]);
+      });
 
   useEffect(() => {
     refresh();
-    listCategories().then(setCategories);
+    listCategories().then(setCategories).catch(reportError);
   }, []);
 
   const filtered = useMemo(() => {
@@ -44,19 +51,32 @@ export default function AdminProductsPage() {
   }, [products, query, cat]);
 
   const handleSave = async (data: Omit<Product, "id">) => {
+    if (busy) return;
     setBusy(true);
-    if (editing) await updateProduct(editing.id, data);
-    else await createProduct(data);
-    await refresh();
-    setBusy(false);
-    setEditing(null);
-    setCreating(false);
+    try {
+      if (editing) await updateProduct(editing.id, data, editing.version ?? -1);
+      else await createProduct(data);
+      await refresh();
+      dataChanged();
+      setEditing(null);
+      setCreating(false);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleDelete = async (p: Product) => {
-    if (!window.confirm(`Delete "${p.brand} ${p.name}"? This cannot be undone.`)) return;
-    await deleteProduct(p.id);
-    refresh();
+    if (
+      !window.confirm(`Delete "${p.brand} ${p.name}"? This cannot be undone.`)
+    )
+      return;
+    try {
+      await deleteProduct(p.id);
+      await refresh();
+      dataChanged();
+    } catch (e) {
+      reportError(e);
+    }
   };
 
   return (
@@ -76,13 +96,29 @@ export default function AdminProductsPage() {
       {/* toolbar */}
       <div className="mb-4 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-48">
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
-          <input className="input !pl-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products…" />
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-faint"
+          />
+          <input
+            className="input !pl-9"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search products…"
+          />
         </div>
-        <select className="input max-w-52" value={cat} onChange={(e) => setCat(e.target.value)}>
-          <option value="" className="bg-surface">All categories</option>
+        <select
+          className="input max-w-52"
+          value={cat}
+          onChange={(e) => setCat(e.target.value)}
+        >
+          <option value="" className="bg-surface">
+            All categories
+          </option>
           {categories.map((c) => (
-            <option key={c.id} value={c.slug} className="bg-surface">{c.name}</option>
+            <option key={c.id} value={c.slug} className="bg-surface">
+              {c.name}
+            </option>
           ))}
         </select>
       </div>
@@ -102,12 +138,23 @@ export default function AdminProductsPage() {
             </thead>
             <tbody>
               {!filtered ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted">Loading…</td></tr>
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-muted">
+                    Loading…
+                  </td>
+                </tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="p-8 text-center text-muted">No products found.</td></tr>
+                <tr>
+                  <td colSpan={5} className="p-8 text-center text-muted">
+                    No products found.
+                  </td>
+                </tr>
               ) : (
                 filtered.map((p) => (
-                  <tr key={p.id} className="border-b border-border-soft last:border-0 hover:bg-surface-2/50">
+                  <tr
+                    key={p.id}
+                    className="border-b border-border-soft last:border-0 hover:bg-surface-2/50"
+                  >
                     <td className="p-3">
                       <div className="flex items-center gap-3">
                         <ProductImage
@@ -125,24 +172,46 @@ export default function AdminProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="p-3 capitalize text-muted">{p.categorySlug}</td>
+                    <td className="p-3 capitalize text-muted">
+                      {p.categorySlug}
+                    </td>
                     <td className="p-3">
-                      <span className="font-semibold">{formatPHP(p.price)}</span>
+                      <span className="font-semibold">
+                        {formatPHP(p.price)}
+                      </span>
                       {p.compareAtPrice && (
-                        <span className="ml-1 text-xs text-faint line-through">{formatPHP(p.compareAtPrice)}</span>
+                        <span className="ml-1 text-xs text-faint line-through">
+                          {formatPHP(p.compareAtPrice)}
+                        </span>
                       )}
                     </td>
                     <td className="p-3">
-                      <span className={p.stock <= 0 ? "text-danger" : p.stock <= 10 ? "text-warning" : "text-success"}>
+                      <span
+                        className={
+                          p.stock <= 0
+                            ? "text-danger"
+                            : p.stock <= 10
+                              ? "text-warning"
+                              : "text-success"
+                        }
+                      >
                         {p.stock}
                       </span>
                     </td>
                     <td className="p-3">
                       <div className="flex justify-end gap-1.5">
-                        <button onClick={() => setEditing(p)} className="btn btn-ghost h-9 w-9 !px-0" aria-label="Edit">
+                        <button
+                          onClick={() => setEditing(p)}
+                          className="btn btn-ghost h-9 w-9 !px-0"
+                          aria-label="Edit"
+                        >
                           <Pencil size={15} />
                         </button>
-                        <button onClick={() => handleDelete(p)} className="btn btn-ghost h-9 w-9 !px-0 text-danger" aria-label="Delete">
+                        <button
+                          onClick={() => handleDelete(p)}
+                          className="btn btn-ghost h-9 w-9 !px-0 text-danger"
+                          aria-label="Delete"
+                        >
                           <Trash2 size={15} />
                         </button>
                       </div>
